@@ -1,0 +1,80 @@
+.hwc-view {
+	padding: 8px 4px 16px 4px;
+	overflow-y: auto;
+}
+
+.hwc-header {
+	padding: 4px 8px 8px 8px;
+	border-bottom: 1px solid var(--background-modifier-border);
+	margin-bottom: 6px;
+}
+
+.hwc-filename {
+	font-weight: 600;
+	font-size: var(--font-ui-medium);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.hwc-doctotal {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+	margin-top: 2px;
+}
+
+.hwc-list {
+	display: flex;
+	flex-direction: column;
+}
+
+.hwc-row {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 8px;
+	padding-top: 3px;
+	padding-bottom: 3px;
+	padding-right: 8px;
+	border-radius: 4px;
+	cursor: pointer;
+	line-height: 1.4;
+}
+
+.hwc-row:hover {
+	background-color: var(--background-modifier-hover);
+}
+
+.hwc-title {
+	flex: 1 1 auto;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	font-size: var(--font-ui-small);
+	color: var(--text-normal);
+}
+
+.hwc-h1 .hwc-title {
+	font-weight: 600;
+}
+
+.hwc-h2 .hwc-title {
+	font-weight: 500;
+}
+
+.hwc-badge {
+	flex: 0 0 auto;
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+	font-variant-numeric: tabular-nums;
+	background-color: var(--background-modifier-hover);
+	padding: 0 6px;
+	border-radius: 8px;
+}
+
+.hwc-empty {
+	padding: 16px 12px;
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+	text-align: center;
+}
