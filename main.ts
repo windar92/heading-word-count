@@ -106,7 +106,7 @@ export default class HeadingWordCountPlugin extends Plugin {
 			leaf = right;
 			await leaf.setViewState({ type: VIEW_TYPE, active: true });
 		}
-		workspace.revealLeaf(leaf);
+		await workspace.revealLeaf(leaf);
 	}
 }
 
@@ -242,9 +242,9 @@ class HeadingWordCountView extends ItemView {
 					return l as WorkspaceLeaf;
 			  });
 
-		Promise.resolve(open).then((leaf) => {
+		void Promise.resolve(open).then((leaf) => {
 			if (!leaf) return;
-			this.app.workspace.revealLeaf(leaf);
+			void this.app.workspace.revealLeaf(leaf);
 			const view = leaf.view;
 			if (view instanceof MarkdownView) {
 				const editor = view.editor;

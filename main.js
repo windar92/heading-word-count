@@ -38,7 +38,7 @@ var DEFAULT_COUNT_OPTIONS = {
 };
 var CJK_CHARS = /[㐀-䶿一-鿿豈-﫿぀-ゟ゠-ヿ가-힯]/g;
 var CJK_PUNCT = /[、-〿︐-︙︰-﹏！-／：-＠［-｀｛-､–—‘’“”…]/g;
-var LATIN_WORD = /[0-9A-Za-zÀ-ɏͰ-ϿЀ-ӿ０-９Ａ-Ｚａ-ｚ]+(?:['’’\-][0-9A-Za-zÀ-ɏͰ-ϿЀ-ӿ０-９Ａ-Ｚａ-ｚ]+)*/g;
+var LATIN_WORD = /[0-9A-Za-zÀ-ɏͰ-ϿЀ-ӿ０-９Ａ-Ｚａ-ｚ]+(?:['‘’-][0-9A-Za-zÀ-ɏͰ-ϿЀ-ӿ０-９Ａ-Ｚａ-ｚ]+)*/g;
 var ATX_HEADING = /^(#{1,6})\s+(.*\S)\s*$/;
 var BARE_URL = /https?:\/\/[^\s)]+/g;
 function cleanForCounting(text, opts) {
@@ -208,7 +208,7 @@ var HeadingWordCountPlugin = class extends import_obsidian.Plugin {
       leaf = right;
       await leaf.setViewState({ type: VIEW_TYPE, active: true });
     }
-    workspace.revealLeaf(leaf);
+    await workspace.revealLeaf(leaf);
   }
 };
 var HeadingWordCountView = class extends import_obsidian.ItemView {
@@ -315,10 +315,10 @@ var HeadingWordCountView = class extends import_obsidian.ItemView {
       const l = this.app.workspace.getMostRecentLeaf();
       return l;
     });
-    Promise.resolve(open).then((leaf) => {
+    void Promise.resolve(open).then((leaf) => {
       if (!leaf)
         return;
-      this.app.workspace.revealLeaf(leaf);
+      void this.app.workspace.revealLeaf(leaf);
       const view = leaf.view;
       if (view instanceof import_obsidian.MarkdownView) {
         const editor = view.editor;

@@ -1,14 +1,14 @@
 /*
- * counter.ts — pure counting & parsing logic (no Obsidian imports).
+ * counter.ts - pure counting & parsing logic (no Obsidian imports).
  * Kept dependency-free so it can be unit-tested directly with Node.
  */
 
 export interface CountOptions {
-	/** 中文標點是否計入字數 */
+	/** Whether Chinese punctuation is counted. */
 	countChinesePunctuation: boolean;
-	/** 排除圍欄程式碼區塊 ```...``` / ~~~...~~~ */
+	/** Exclude fenced code blocks (``` ... ``` / ~~~ ... ~~~). */
 	excludeCodeBlocks: boolean;
-	/** 排除行內程式碼 `code` */
+	/** Exclude inline code (`code`). */
 	excludeInlineCode: boolean;
 }
 
@@ -32,16 +32,16 @@ export interface DocumentCount {
 }
 
 // ---------------------------------------------------------------------------
-// Character classes
+// Character classes (written with \u escapes to keep this file ASCII-only)
 // ---------------------------------------------------------------------------
 
-// CJK "characters" — each counts as one word.
+// CJK "characters" - each counts as one word.
 // Han (incl. Ext-A) + compatibility ideographs + Hiragana + Katakana + Hangul.
 const CJK_CHARS =
 	/[㐀-䶿一-鿿豈-﫿぀-ゟ゠-ヿ가-힯]/g;
 
 // CJK / fullwidth punctuation. Deliberately excludes:
-//   　 (ideographic space — treated as whitespace)
+//   U+3000 ideographic space (treated as whitespace)
 //   ０-９ fullwidth digits, Ａ-Ｚ fullwidth A-Z, ａ-ｚ fullwidth a-z
 // so those flow into the Latin-word bucket instead.
 const CJK_PUNCT =
@@ -50,7 +50,7 @@ const CJK_PUNCT =
 // Latin / western words: letters & digits (incl. accented + fullwidth latin/digits),
 // joined by internal apostrophes/hyphens (don't, well-known).
 const LATIN_WORD =
-	/[0-9A-Za-zÀ-ɏͰ-ϿЀ-ӿ０-９Ａ-Ｚａ-ｚ]+(?:['’’\-][0-9A-Za-zÀ-ɏͰ-ϿЀ-ӿ０-９Ａ-Ｚａ-ｚ]+)*/g;
+	/[0-9A-Za-zÀ-ɏͰ-ϿЀ-ӿ０-９Ａ-Ｚａ-ｚ]+(?:['‘’-][0-9A-Za-zÀ-ɏͰ-ϿЀ-ӿ０-９Ａ-Ｚａ-ｚ]+)*/g;
 
 const ATX_HEADING = /^(#{1,6})\s+(.*\S)\s*$/;
 const BARE_URL = /https?:\/\/[^\s)]+/g;
@@ -72,7 +72,7 @@ function cleanForCounting(text: string, opts: CountOptions): string {
 		t = t.replace(/`[^`]*`/g, " ");
 	}
 
-	// Images: ![alt](url) and embeds ![[...]] — drop entirely (alt text not counted)
+	// Images: ![alt](url) and embeds ![[...]] - drop entirely (alt text not counted)
 	t = t.replace(/!\[[^\]]*\]\([^)]*\)/g, " ");
 	t = t.replace(/!\[\[[^\]]*\]\]/g, " ");
 
@@ -119,7 +119,7 @@ function stripFrontmatter(lines: string[]): string[] {
 	return lines;
 }
 
-/** Clean a heading's raw text for display (strip markdown, links, tags of markup). */
+/** Clean a heading's raw text for display (strip markdown, links, markup). */
 function cleanHeadingTitle(raw: string): string {
 	let t = raw.replace(/\s+#+\s*$/, ""); // trailing closing #'s
 	t = t.replace(/`([^`]*)`/g, "$1");

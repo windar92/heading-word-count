@@ -1,10 +1,10 @@
 {
   "id": "heading-word-count",
   "name": "Heading Word Count",
-  "version": "1.0.0",
-  "minAppVersion": "1.4.0",
+  "version": "1.0.1",
+  "minAppVersion": "1.7.2",
   "description": "Shows a per-section word count after every H1–H6 heading in a dedicated outline panel. Counts Chinese characters one-by-one and English by words, with configurable punctuation rules.",
   "author": "Cem Yang",
-  "authorUrl": "",
+  "authorUrl": "https://github.com/windar92",
   "isDesktopOnly": false
 }
