@@ -8,6 +8,7 @@ import {
 	TFile,
 	WorkspaceLeaf,
 	debounce,
+	setIcon,
 } from "obsidian";
 
 import {
@@ -15,7 +16,10 @@ import {
 	CountOptions,
 	DEFAULT_COUNT_OPTIONS,
 	DocumentCount,
+	HeadingNode,
 } from "./counter";
+
+import { getStrings, LangPref, Strings } from "./i18n";
 
 export const VIEW_TYPE = "heading-word-count-outline";
 
@@ -26,6 +30,10 @@ interface PluginSettings extends CountOptions {
 	showDocumentTotal: boolean;
 	/** 顯示到第幾層標題 (1-6) */
 	maxDepth: number;
+	/** 開啟時自動捲到底的檔案路徑清單（只針對這些檔案） */
+	autoScrollFiles: string[];
+	/** 介面語言：auto / zh / en */
+	uiLanguage: LangPref;
 }
 
 const DEFAULT_SETTINGS: PluginSettings = {
@@ -33,7 +41,39 @@ const DEFAULT_SETTINGS: PluginSettings = {
 	countMode: "total",
 	showDocumentTotal: true,
 	maxDepth: 6,
+	autoScrollFiles: [],
+	uiLanguage: "auto",
 };
+
+interface TreeNode extends HeadingNode {
+	children: TreeNode[];
+}
+
+/** Build a nested tree from the flat heading list, based on level. */
+function buildTree(headings: HeadingNode[]): TreeNode[] {
+	const roots: TreeNode[] = [];
+	const stack: TreeNode[] = [];
+	for (const h of headings) {
+		const node: TreeNode = { ...h, children: [] };
+		while (stack.length && stack[stack.length - 1].level >= h.level) {
+			stack.pop();
+		}
+		if (stack.length) stack[stack.length - 1].children.push(node);
+		else roots.push(node);
+		stack.push(node);
+	}
+	return roots;
+}
+
+/** Collect the line numbers of every node that has children. */
+function collectParentLines(nodes: TreeNode[], out: number[]): void {
+	for (const n of nodes) {
+		if (n.children.length) {
+			out.push(n.line);
+			collectParentLines(n.children, out);
+		}
+	}
+}
 
 // ===========================================================================
 // Plugin
@@ -41,20 +81,23 @@ const DEFAULT_SETTINGS: PluginSettings = {
 
 export default class HeadingWordCountPlugin extends Plugin {
 	settings: PluginSettings;
+	t: Strings;
 
 	async onload() {
 		await this.loadSettings();
 
 		this.registerView(VIEW_TYPE, (leaf) => new HeadingWordCountView(leaf, this));
 
-		this.addRibbonIcon("list-ordered", "字數大綱", () => {
-			this.activateView();
+		this.addRibbonIcon("list-ordered", this.t.ribbonTooltip, () => {
+			void this.activateView();
 		});
 
 		this.addCommand({
-			id: "open-heading-word-count-outline",
-			name: "開啟字數大綱面板",
-			callback: () => this.activateView(),
+			id: "open-outline",
+			name: this.t.cmdOpen,
+			callback: () => {
+				void this.activateView();
+			},
 		});
 
 		this.addSettingTab(new HeadingWordCountSettingTab(this.app, this));
@@ -64,7 +107,19 @@ export default class HeadingWordCountPlugin extends Plugin {
 			this.app.workspace.on("active-leaf-change", () => this.refreshViews())
 		);
 		this.registerEvent(
-			this.app.workspace.on("file-open", () => this.refreshViews())
+			this.app.workspace.on("file-open", (file) => {
+				this.refreshViews();
+				if (file && this.settings.autoScrollFiles.includes(file.path)) {
+					// Editor needs a tick to be ready after opening.
+					window.setTimeout(() => {
+						const view =
+							this.app.workspace.getActiveViewOfType(MarkdownView);
+						if (view && view.file && view.file.path === file.path) {
+							this.scrollEditorToBottom(view);
+						}
+					}, 80);
+				}
+			})
 		);
 
 		const debouncedRefresh = debounce(() => this.refreshViews(), 400, false);
@@ -79,22 +134,40 @@ export default class HeadingWordCountPlugin extends Plugin {
 		// Leaves are detached automatically by Obsidian for registered views.
 	}
 
+	applyLang() {
+		this.t = getStrings(this.settings.uiLanguage);
+	}
+
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		const data = (await this.loadData()) as Partial<PluginSettings> | null;
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, data ?? {});
+		if (!Array.isArray(this.settings.autoScrollFiles)) {
+			this.settings.autoScrollFiles = [];
+		}
+		this.applyLang();
 	}
 
 	async saveSettings() {
+		this.applyLang();
 		await this.saveData(this.settings);
 		this.refreshViews();
 	}
 
+	scrollEditorToBottom(view: MarkdownView) {
+		const editor = view.editor;
+		const last = editor.lastLine();
+		editor.setCursor({ line: last, ch: editor.getLine(last).length });
+		editor.scrollIntoView(
+			{ from: { line: last, ch: 0 }, to: { line: last, ch: 0 } },
+			true
+		);
+	}
+
 	refreshViews() {
-		this.app.workspace
-			.getLeavesOfType(VIEW_TYPE)
-			.forEach((leaf) => {
-				const view = leaf.view;
-				if (view instanceof HeadingWordCountView) view.render();
-			});
+		this.app.workspace.getLeavesOfType(VIEW_TYPE).forEach((leaf) => {
+			const view = leaf.view;
+			if (view instanceof HeadingWordCountView) view.render();
+		});
 	}
 
 	async activateView() {
@@ -116,6 +189,10 @@ export default class HeadingWordCountPlugin extends Plugin {
 
 class HeadingWordCountView extends ItemView {
 	plugin: HeadingWordCountPlugin;
+	/** Collapsed heading lines, keyed by file path. */
+	private collapsed: Map<string, Set<number>> = new Map();
+	private currentFile: TFile | null = null;
+	private currentRoots: TreeNode[] = [];
 
 	constructor(leaf: WorkspaceLeaf, plugin: HeadingWordCountPlugin) {
 		super(leaf);
@@ -127,7 +204,7 @@ class HeadingWordCountView extends ItemView {
 	}
 
 	getDisplayText() {
-		return "字數大綱";
+		return this.plugin.t.panelTitle;
 	}
 
 	getIcon() {
@@ -142,10 +219,18 @@ class HeadingWordCountView extends ItemView {
 		this.contentEl.empty();
 	}
 
+	private getCollapsedSet(path: string): Set<number> {
+		let s = this.collapsed.get(path);
+		if (!s) {
+			s = new Set();
+			this.collapsed.set(path, s);
+		}
+		return s;
+	}
+
 	private getActiveMarkdownFile(): TFile | null {
 		const active = this.app.workspace.getActiveViewOfType(MarkdownView);
 		if (active && active.file) return active.file;
-		// Fall back to the most recent markdown leaf.
 		const leaves = this.app.workspace.getLeavesOfType("markdown");
 		for (const leaf of leaves) {
 			const v = leaf.view;
@@ -156,20 +241,18 @@ class HeadingWordCountView extends ItemView {
 
 	render() {
 		const container = this.contentEl;
-		container.empty();
 		container.addClass("hwc-view");
 
 		const file = this.getActiveMarkdownFile();
 		if (!file) {
+			container.empty();
 			container.createDiv({
 				cls: "hwc-empty",
-				text: "開啟一份 Markdown 筆記以顯示字數大綱。",
+				text: this.plugin.t.emptyNoFile,
 			});
 			return;
 		}
 
-		// Read content synchronously from the active editor when possible,
-		// otherwise from cache asynchronously.
 		const activeMd = this.app.workspace.getActiveViewOfType(MarkdownView);
 		if (activeMd && activeMd.file === file) {
 			this.renderContent(file, activeMd.editor.getValue());
@@ -183,45 +266,142 @@ class HeadingWordCountView extends ItemView {
 	private renderContent(file: TFile, content: string) {
 		const container = this.contentEl;
 		container.empty();
+		this.currentFile = file;
 
+		const t = this.plugin.t;
 		const data: DocumentCount = analyzeDocument(content, this.plugin.settings);
 		const s = this.plugin.settings;
 
-		// Header
+		// ---- Tree (built first so the header can reflect fold state) ----
+		const visible = data.headings.filter((h) => h.level <= s.maxDepth);
+		this.currentRoots = buildTree(visible);
+		const collapsedSet = this.getCollapsedSet(file.path);
+		const parentLines: number[] = [];
+		collectParentLines(this.currentRoots, parentLines);
+		const allCollapsed =
+			parentLines.length > 0 &&
+			parentLines.every((l) => collapsedSet.has(l));
+
+		// ---- Header ----
 		const header = container.createDiv({ cls: "hwc-header" });
-		header.createDiv({ cls: "hwc-filename", text: file.basename });
-		if (s.showDocumentTotal) {
-			header.createDiv({
-				cls: "hwc-doctotal",
-				text: `全文 ${formatCount(data.documentTotal)} 字`,
+		const titleRow = header.createDiv({ cls: "hwc-titlerow" });
+		titleRow.createDiv({ cls: "hwc-filename", text: file.basename });
+
+		const toolbar = titleRow.createDiv({ cls: "hwc-toolbar" });
+
+		// Single button that cycles: collapse all <-> expand all.
+		if (parentLines.length > 0) {
+			const foldBtn = toolbar.createDiv({ cls: "hwc-btn" });
+			setIcon(foldBtn, allCollapsed ? "chevrons-up-down" : "chevrons-down-up");
+			foldBtn.setAttribute(
+				"aria-label",
+				allCollapsed ? t.tipExpandAll : t.tipCollapseAll
+			);
+			foldBtn.addEventListener("click", () => {
+				if (allCollapsed) this.expandAll();
+				else this.collapseAll();
 			});
 		}
 
-		const visible = data.headings.filter((h) => h.level <= s.maxDepth);
+		const autoOn = s.autoScrollFiles.includes(file.path);
+		const scrollBtn = toolbar.createDiv({
+			cls: "hwc-btn" + (autoOn ? " is-active" : ""),
+		});
+		setIcon(scrollBtn, "chevrons-down");
+		scrollBtn.setAttribute("aria-label", autoOn ? t.tipAutoOn : t.tipAutoOff);
+		scrollBtn.addEventListener("click", () => void this.toggleAutoScroll(file));
+
+		if (s.showDocumentTotal) {
+			header.createDiv({
+				cls: "hwc-doctotal",
+				text: t.docTotal(formatCount(data.documentTotal)),
+			});
+		}
+
+		// ---- Tree list ----
 		if (visible.length === 0) {
 			container.createDiv({
 				cls: "hwc-empty",
-				text: "這份筆記沒有標題 (H1–H6)。",
+				text: t.emptyNoHeadings,
 			});
 			return;
 		}
 
 		const list = container.createDiv({ cls: "hwc-list" });
-		for (const h of visible) {
-			const count = s.countMode === "total" ? h.totalCount : h.ownCount;
-			const row = list.createDiv({ cls: `hwc-row hwc-h${h.level}` });
-			row.style.paddingLeft = `${(h.level - 1) * 14 + 4}px`;
+		this.renderNodes(this.currentRoots, list, collapsedSet, file);
+	}
 
-			row.createSpan({
-				cls: "hwc-title",
-				text: h.title || "(無標題)",
-			});
-			row.createSpan({
-				cls: "hwc-badge",
-				text: formatCount(count),
-			});
+	private renderNodes(
+		nodes: TreeNode[],
+		listEl: HTMLElement,
+		collapsedSet: Set<number>,
+		file: TFile
+	) {
+		const s = this.plugin.settings;
+		const t = this.plugin.t;
+		for (const node of nodes) {
+			const hasChildren = node.children.length > 0;
+			const isCollapsed = collapsedSet.has(node.line);
 
-			row.addEventListener("click", () => this.revealHeading(file, h.line));
+			const row = listEl.createDiv({ cls: `hwc-row hwc-h${node.level}` });
+			row.style.paddingLeft = `${(node.level - 1) * 14 + 4}px`;
+
+			// Fold toggle (or spacer to keep alignment)
+			const fold = row.createSpan({ cls: "hwc-fold" });
+			if (hasChildren) {
+				setIcon(fold, isCollapsed ? "chevron-right" : "chevron-down");
+				fold.addEventListener("click", (e) => {
+					e.stopPropagation();
+					if (collapsedSet.has(node.line)) collapsedSet.delete(node.line);
+					else collapsedSet.add(node.line);
+					this.render();
+				});
+			} else {
+				fold.addClass("hwc-fold-empty");
+			}
+
+			const count = s.countMode === "total" ? node.totalCount : node.ownCount;
+			row.createSpan({ cls: "hwc-title", text: node.title || t.untitled });
+			row.createSpan({ cls: "hwc-badge", text: formatCount(count) });
+
+			row.addEventListener("click", () => this.revealHeading(file, node.line));
+
+			if (hasChildren && !isCollapsed) {
+				this.renderNodes(node.children, listEl, collapsedSet, file);
+			}
+		}
+	}
+
+	private collapseAll() {
+		if (!this.currentFile) return;
+		const set = this.getCollapsedSet(this.currentFile.path);
+		const lines: number[] = [];
+		collectParentLines(this.currentRoots, lines);
+		lines.forEach((l) => set.add(l));
+		this.render();
+	}
+
+	private expandAll() {
+		if (!this.currentFile) return;
+		this.getCollapsedSet(this.currentFile.path).clear();
+		this.render();
+	}
+
+	private async toggleAutoScroll(file: TFile) {
+		const arr = this.plugin.settings.autoScrollFiles;
+		const idx = arr.indexOf(file.path);
+		let turnedOn = false;
+		if (idx >= 0) arr.splice(idx, 1);
+		else {
+			arr.push(file.path);
+			turnedOn = true;
+		}
+		await this.plugin.saveSettings(); // triggers re-render
+		if (turnedOn) {
+			const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+			if (view && view.file && view.file.path === file.path) {
+				this.plugin.scrollEditorToBottom(view);
+			}
 		}
 	}
 
@@ -237,10 +417,12 @@ class HeadingWordCountView extends ItemView {
 		}
 		const open = target
 			? Promise.resolve(target)
-			: this.app.workspace.getLeaf(false).openFile(file).then(() => {
-					const l = this.app.workspace.getMostRecentLeaf();
-					return l as WorkspaceLeaf;
-			  });
+			: this.app.workspace
+					.getLeaf(false)
+					.openFile(file)
+					.then(() => {
+						return this.app.workspace.getMostRecentLeaf() as WorkspaceLeaf;
+					});
 
 		void Promise.resolve(open).then((leaf) => {
 			if (!leaf) return;
@@ -278,16 +460,32 @@ class HeadingWordCountSettingTab extends PluginSettingTab {
 	display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
+		const t = this.plugin.t;
 
+		// Language selector — kept at the very top so it is easy to find.
 		new Setting(containerEl)
-			.setName("計算範圍")
-			.setDesc(
-				"每個標題的字數要「包含底下所有子章節」，還是「只算到下一個標題之前」。"
-			)
+			.setName(t.setLangName)
+			.setDesc(t.setLangDesc)
 			.addDropdown((d) =>
 				d
-					.addOption("total", "含子章節（H1 包含其下所有內容）")
-					.addOption("own", "只算本節（不含子章節）")
+					.addOption("auto", t.optAuto)
+					.addOption("zh", "中文")
+					.addOption("en", "English")
+					.setValue(this.plugin.settings.uiLanguage)
+					.onChange(async (v) => {
+						this.plugin.settings.uiLanguage = v as LangPref;
+						await this.plugin.saveSettings();
+						this.display(); // re-render this tab in the new language
+					})
+			);
+
+		new Setting(containerEl)
+			.setName(t.setScopeName)
+			.setDesc(t.setScopeDesc)
+			.addDropdown((d) =>
+				d
+					.addOption("total", t.optTotal)
+					.addOption("own", t.optOwn)
 					.setValue(this.plugin.settings.countMode)
 					.onChange(async (v) => {
 						this.plugin.settings.countMode = v as "total" | "own";
@@ -296,12 +494,10 @@ class HeadingWordCountSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName("計入中文標點符號")
-			.setDesc(
-				"開啟後，中文標點（，。、！？「」等）也會計為 1 個字。中文方塊字一律逐字計算，不受此項影響。"
-			)
-			.addToggle((t) =>
-				t
+			.setName(t.setPunctName)
+			.setDesc(t.setPunctDesc)
+			.addToggle((tg) =>
+				tg
 					.setValue(this.plugin.settings.countChinesePunctuation)
 					.onChange(async (v) => {
 						this.plugin.settings.countChinesePunctuation = v;
@@ -310,10 +506,10 @@ class HeadingWordCountSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName("排除程式碼區塊")
-			.setDesc("不計算 ``` 圍欄程式碼區塊內的文字。")
-			.addToggle((t) =>
-				t
+			.setName(t.setExCodeName)
+			.setDesc(t.setExCodeDesc)
+			.addToggle((tg) =>
+				tg
 					.setValue(this.plugin.settings.excludeCodeBlocks)
 					.onChange(async (v) => {
 						this.plugin.settings.excludeCodeBlocks = v;
@@ -322,10 +518,10 @@ class HeadingWordCountSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName("排除行內程式碼")
-			.setDesc("不計算 `行內程式碼` 內的文字。")
-			.addToggle((t) =>
-				t
+			.setName(t.setExInlineName)
+			.setDesc(t.setExInlineDesc)
+			.addToggle((tg) =>
+				tg
 					.setValue(this.plugin.settings.excludeInlineCode)
 					.onChange(async (v) => {
 						this.plugin.settings.excludeInlineCode = v;
@@ -334,13 +530,12 @@ class HeadingWordCountSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName("顯示到第幾層標題")
-			.setDesc("只在面板中顯示到指定層級的標題（1 = 只顯示 H1，6 = 全部顯示）。")
+			.setName(t.setDepthName)
+			.setDesc(t.setDepthDesc)
 			.addSlider((sl) =>
 				sl
 					.setLimits(1, 6, 1)
 					.setValue(this.plugin.settings.maxDepth)
-					.setDynamicTooltip()
 					.onChange(async (v) => {
 						this.plugin.settings.maxDepth = v;
 						await this.plugin.saveSettings();
@@ -348,15 +543,39 @@ class HeadingWordCountSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName("顯示全文總字數")
-			.setDesc("在面板頂端顯示整份筆記的總字數。")
-			.addToggle((t) =>
-				t
+			.setName(t.setShowTotalName)
+			.setDesc(t.setShowTotalDesc)
+			.addToggle((tg) =>
+				tg
 					.setValue(this.plugin.settings.showDocumentTotal)
 					.onChange(async (v) => {
 						this.plugin.settings.showDocumentTotal = v;
 						await this.plugin.saveSettings();
 					})
 			);
+
+		new Setting(containerEl)
+			.setName(t.setAutoScrollName)
+			.setDesc(t.setAutoScrollDesc);
+
+		if (this.plugin.settings.autoScrollFiles.length > 0) {
+			const list = containerEl.createDiv({ cls: "hwc-settings-filelist" });
+			list.createEl("div", {
+				text: t.autoListLabel,
+				cls: "setting-item-description",
+			});
+			for (const p of [...this.plugin.settings.autoScrollFiles]) {
+				const row = new Setting(list).setName(p);
+				row.addButton((b) =>
+					b.setButtonText(t.removeBtn).onClick(async () => {
+						const arr = this.plugin.settings.autoScrollFiles;
+						const i = arr.indexOf(p);
+						if (i >= 0) arr.splice(i, 1);
+						await this.plugin.saveSettings();
+						this.display();
+					})
+				);
+			}
+		}
 	}
 }

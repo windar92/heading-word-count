@@ -1,9 +1,9 @@
 {
   "id": "heading-word-count",
-  "name": "Heading Word Count",
-  "version": "1.0.1",
+  "name": "Heading Word Count 分段字數統計",
+  "version": "1.1.0",
   "minAppVersion": "1.7.2",
-  "description": "Shows a per-section word count after every H1–H6 heading in a dedicated outline panel. Counts Chinese characters one-by-one and English by words, with configurable punctuation rules.",
+  "description": "Per-heading (H1–H6) word count outline for mixed Chinese and English writing, with a collapsible tree and configurable rules. ｜ 逐標題（H1–H6）字數大綱，中英文皆可，支援大綱收合與自訂計算規則。",
   "author": "Cem Yang",
   "authorUrl": "https://github.com/windar92",
   "isDesktopOnly": false

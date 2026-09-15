@@ -12,6 +12,8 @@ Heading Word Count shows a per-section word count for every **H1–H6 heading** 
   - Whether to exclude fenced code blocks and inline code.
   - How many heading levels to display (H1–H6).
   - Whether to show a whole-note total.
+- **Collapsible outline** — one toolbar button cycles collapse-all / expand-all, and each section can be folded individually.
+- **Per-file auto-scroll** — mark a note with the ↓ button so it always opens scrolled to the end; handy for continuing a long draft. Only marked notes behave this way.
 - **Click to jump** — click a heading in the panel to jump to it in the note.
 - **Live updates** — counts update as you type.
 
@@ -62,6 +64,8 @@ Heading Word Count 會在一個獨立的側邊面板中，依 **H1–H6 標題**
 - 每個 H1–H6 標題後面顯示該標題底下的字數，排成大綱樹狀。
 - 中文（含日文、韓文）方塊字逐字計算；英文／西文依單字計算。
 - 可自訂：計算範圍（含子章節／只算本節）、中文標點是否計入（預設不計）、是否排除程式碼、顯示到第幾層、是否顯示全文總字數。
+- 大綱可收合：頂端一顆按鈕循環「全部收合／全部展開」，每段也能單獨收合。
+- 逐檔案自動捲到底：用 ↓ 按鈕標記某篇筆記，之後打開它就自動捲到最底、游標停在文末，方便接著寫長稿（只有被標記的檔案會這樣）。
 - 點面板上的標題可直接跳到筆記對應位置；邊打字邊即時更新。
 
 **使用方式**：啟用後點左側功能區的清單圖示，或用命令面板執行「開啟字數大綱面板」，面板會出現在右側。到「設定 → Heading Word Count」調整規則。

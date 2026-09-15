@@ -9,18 +9,63 @@
 	margin-bottom: 6px;
 }
 
+.hwc-titlerow {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+
 .hwc-filename {
 	font-weight: 600;
 	font-size: var(--font-ui-medium);
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
+	flex: 1 1 auto;
+}
+
+.hwc-toolbar {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	flex: 0 0 auto;
+}
+
+.hwc-btn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 26px;
+	height: 26px;
+	border-radius: 5px;
+	cursor: pointer;
+	color: var(--text-muted);
+}
+
+.hwc-btn:hover {
+	background-color: var(--background-modifier-hover);
+	color: var(--text-normal);
+}
+
+.hwc-btn.is-active {
+	color: var(--text-on-accent);
+	background-color: var(--interactive-accent);
+}
+
+.hwc-btn.is-active:hover {
+	background-color: var(--interactive-accent-hover);
+}
+
+.hwc-btn .svg-icon {
+	width: 16px;
+	height: 16px;
 }
 
 .hwc-doctotal {
 	font-size: var(--font-ui-smaller);
 	color: var(--text-muted);
-	margin-top: 2px;
+	margin-top: 4px;
 }
 
 .hwc-list {
@@ -31,8 +76,7 @@
 .hwc-row {
 	display: flex;
 	align-items: baseline;
-	justify-content: space-between;
-	gap: 8px;
+	gap: 4px;
 	padding-top: 3px;
 	padding-bottom: 3px;
 	padding-right: 8px;
@@ -43,6 +87,36 @@
 
 .hwc-row:hover {
 	background-color: var(--background-modifier-hover);
+}
+
+.hwc-fold {
+	flex: 0 0 auto;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 16px;
+	height: 16px;
+	align-self: center;
+	color: var(--text-faint);
+	border-radius: 3px;
+}
+
+.hwc-fold:hover {
+	color: var(--text-normal);
+	background-color: var(--background-modifier-border);
+}
+
+.hwc-fold .svg-icon {
+	width: 14px;
+	height: 14px;
+}
+
+.hwc-fold-empty {
+	cursor: default;
+}
+
+.hwc-fold-empty:hover {
+	background-color: transparent;
 }
 
 .hwc-title {
@@ -70,6 +144,7 @@
 	background-color: var(--background-modifier-hover);
 	padding: 0 6px;
 	border-radius: 8px;
+	align-self: center;
 }
 
 .hwc-empty {
@@ -77,4 +152,8 @@
 	color: var(--text-muted);
 	font-size: var(--font-ui-small);
 	text-align: center;
+}
+
+.hwc-settings-filelist {
+	margin-top: 8px;
 }

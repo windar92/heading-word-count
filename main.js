@@ -149,32 +149,152 @@ function analyzeDocument(content, opts) {
   return { headings, documentTotal };
 }
 
+// i18n.ts
+var EN = {
+  panelTitle: "Word Count Outline",
+  ribbonTooltip: "Word Count Outline",
+  cmdOpen: "Open the word-count outline panel",
+  emptyNoFile: "Open a Markdown note to see the word-count outline.",
+  emptyNoHeadings: "This note has no headings (H1\u2013H6).",
+  untitled: "(untitled)",
+  docTotal: (n) => `${n} words total`,
+  tipCollapseAll: "Collapse all",
+  tipExpandAll: "Expand all",
+  tipAutoOn: "This file: auto-scroll to bottom on open (click to turn off)",
+  tipAutoOff: "This file: auto-scroll to bottom on open (click to turn on)",
+  setLangName: "Interface language",
+  setLangDesc: `Language for this plugin's UI. "Auto" follows Obsidian's own language setting. Command and ribbon labels update after a reload.`,
+  optAuto: "Auto (follow Obsidian)",
+  setScopeName: "Counting scope",
+  setScopeDesc: "Whether each heading's count includes all of its sub-sections, or only its own text up to the next heading.",
+  optTotal: "Include sub-sections (an H1 includes everything beneath it)",
+  optOwn: "Own section only (excludes sub-sections)",
+  setPunctName: "Count Chinese punctuation",
+  setPunctDesc: "When on, Chinese punctuation (\uFF0C\u3002\u3001\uFF01\uFF1F\u300C\u300Detc.) each counts as 1. Chinese characters are always counted one-by-one regardless of this.",
+  setExCodeName: "Exclude code blocks",
+  setExCodeDesc: "Do not count text inside ``` fenced code blocks.",
+  setExInlineName: "Exclude inline code",
+  setExInlineDesc: "Do not count text inside `inline code`.",
+  setDepthName: "Show headings down to level",
+  setDepthDesc: "Only show headings down to this level (1 = H1 only, 6 = show all).",
+  setShowTotalName: "Show whole-note total",
+  setShowTotalDesc: "Show the note's total word count at the top of the panel.",
+  setAutoScrollName: "Auto-scroll to bottom on open (per file)",
+  setAutoScrollDesc: "This is a per-file setting: in the outline panel, click the down button (\u2304\u2304) to mark the current note as auto-scroll-to-bottom. Only marked notes do this; others behave normally.",
+  autoListLabel: "Files currently set to auto-scroll to bottom:",
+  removeBtn: "Remove"
+};
+var ZH = {
+  panelTitle: "\u5B57\u6578\u5927\u7DB1",
+  ribbonTooltip: "\u5B57\u6578\u5927\u7DB1",
+  cmdOpen: "\u958B\u555F\u5B57\u6578\u5927\u7DB1\u9762\u677F",
+  emptyNoFile: "\u958B\u555F\u4E00\u4EFD Markdown \u7B46\u8A18\u4EE5\u986F\u793A\u5B57\u6578\u5927\u7DB1\u3002",
+  emptyNoHeadings: "\u9019\u4EFD\u7B46\u8A18\u6C92\u6709\u6A19\u984C (H1\u2013H6)\u3002",
+  untitled: "(\u7121\u6A19\u984C)",
+  docTotal: (n) => `\u5168\u6587 ${n} \u5B57`,
+  tipCollapseAll: "\u5168\u90E8\u6536\u5408",
+  tipExpandAll: "\u5168\u90E8\u5C55\u958B",
+  tipAutoOn: "\u6B64\u6A94\u6848\uFF1A\u958B\u555F\u6642\u81EA\u52D5\u6372\u5230\u5E95\uFF08\u9EDE\u64CA\u95DC\u9589\uFF09",
+  tipAutoOff: "\u6B64\u6A94\u6848\uFF1A\u958B\u555F\u6642\u81EA\u52D5\u6372\u5230\u5E95\uFF08\u9EDE\u64CA\u958B\u555F\uFF09",
+  setLangName: "\u4ECB\u9762\u8A9E\u8A00",
+  setLangDesc: "\u5916\u639B\u4ECB\u9762\u8981\u7528\u7684\u8A9E\u8A00\u3002\u300C\u81EA\u52D5\u300D\u6703\u8DDF\u96A8 Obsidian \u672C\u8EAB\u7684\u8A9E\u8A00\u8A2D\u5B9A\u3002\u6307\u4EE4\u8207\u529F\u80FD\u5340\u7684\u540D\u7A31\u6703\u5728\u91CD\u65B0\u8F09\u5165\u5F8C\u66F4\u65B0\u3002",
+  optAuto: "\u81EA\u52D5\uFF08\u8DDF\u96A8 Obsidian\uFF09",
+  setScopeName: "\u8A08\u7B97\u7BC4\u570D",
+  setScopeDesc: "\u6BCF\u500B\u6A19\u984C\u7684\u5B57\u6578\u8981\u300C\u5305\u542B\u5E95\u4E0B\u6240\u6709\u5B50\u7AE0\u7BC0\u300D\uFF0C\u9084\u662F\u300C\u53EA\u7B97\u5230\u4E0B\u4E00\u500B\u6A19\u984C\u4E4B\u524D\u300D\u3002",
+  optTotal: "\u542B\u5B50\u7AE0\u7BC0\uFF08H1 \u5305\u542B\u5176\u4E0B\u6240\u6709\u5167\u5BB9\uFF09",
+  optOwn: "\u53EA\u7B97\u672C\u7BC0\uFF08\u4E0D\u542B\u5B50\u7AE0\u7BC0\uFF09",
+  setPunctName: "\u8A08\u5165\u4E2D\u6587\u6A19\u9EDE\u7B26\u865F",
+  setPunctDesc: "\u958B\u555F\u5F8C\uFF0C\u4E2D\u6587\u6A19\u9EDE\uFF08\uFF0C\u3002\u3001\uFF01\uFF1F\u300C\u300D\u7B49\uFF09\u4E5F\u6703\u8A08\u70BA 1 \u500B\u5B57\u3002\u4E2D\u6587\u65B9\u584A\u5B57\u4E00\u5F8B\u9010\u5B57\u8A08\u7B97\uFF0C\u4E0D\u53D7\u6B64\u9805\u5F71\u97FF\u3002",
+  setExCodeName: "\u6392\u9664\u7A0B\u5F0F\u78BC\u5340\u584A",
+  setExCodeDesc: "\u4E0D\u8A08\u7B97 ``` \u570D\u6B04\u7A0B\u5F0F\u78BC\u5340\u584A\u5167\u7684\u6587\u5B57\u3002",
+  setExInlineName: "\u6392\u9664\u884C\u5167\u7A0B\u5F0F\u78BC",
+  setExInlineDesc: "\u4E0D\u8A08\u7B97 `\u884C\u5167\u7A0B\u5F0F\u78BC` \u5167\u7684\u6587\u5B57\u3002",
+  setDepthName: "\u986F\u793A\u5230\u7B2C\u5E7E\u5C64\u6A19\u984C",
+  setDepthDesc: "\u53EA\u5728\u9762\u677F\u4E2D\u986F\u793A\u5230\u6307\u5B9A\u5C64\u7D1A\u7684\u6A19\u984C\uFF081 = \u53EA\u986F\u793A H1\uFF0C6 = \u5168\u90E8\u986F\u793A\uFF09\u3002",
+  setShowTotalName: "\u986F\u793A\u5168\u6587\u7E3D\u5B57\u6578",
+  setShowTotalDesc: "\u5728\u9762\u677F\u9802\u7AEF\u986F\u793A\u6574\u4EFD\u7B46\u8A18\u7684\u7E3D\u5B57\u6578\u3002",
+  setAutoScrollName: "\u958B\u555F\u6642\u81EA\u52D5\u6372\u5230\u5E95\uFF08\u4F9D\u6A94\u6848\uFF09",
+  setAutoScrollDesc: "\u6B64\u529F\u80FD\u662F\u300C\u9010\u6A94\u6848\u300D\u8A2D\u5B9A\uFF1A\u5728\u5B57\u6578\u5927\u7DB1\u9762\u677F\u9802\u7AEF\u9EDE\u300C\u2304\u2304\u300D\u6309\u9215\uFF0C\u628A\u76EE\u524D\u9019\u4EFD\u7B46\u8A18\u6A19\u8A18\u70BA\u300C\u958B\u555F\u6642\u81EA\u52D5\u6372\u5230\u5E95\u300D\u3002\u53EA\u6709\u88AB\u6A19\u8A18\u7684\u6A94\u6848\u6703\u9019\u6A23\uFF0C\u5176\u5B83\u6A94\u6848\u7167\u5E38\u3002",
+  autoListLabel: "\u76EE\u524D\u5DF2\u6A19\u8A18\u81EA\u52D5\u6372\u5230\u5E95\u7684\u6A94\u6848\uFF1A",
+  removeBtn: "\u79FB\u9664"
+};
+function detectObsidianLang() {
+  try {
+    const l = window.localStorage.getItem("language") || "";
+    return l.toLowerCase().startsWith("zh") ? "zh" : "en";
+  } catch (e) {
+    return "en";
+  }
+}
+function getStrings(pref) {
+  const lang = pref === "auto" ? detectObsidianLang() : pref;
+  return lang === "zh" ? ZH : EN;
+}
+
 // main.ts
 var VIEW_TYPE = "heading-word-count-outline";
 var DEFAULT_SETTINGS = {
   ...DEFAULT_COUNT_OPTIONS,
   countMode: "total",
   showDocumentTotal: true,
-  maxDepth: 6
+  maxDepth: 6,
+  autoScrollFiles: [],
+  uiLanguage: "auto"
 };
+function buildTree(headings) {
+  const roots = [];
+  const stack = [];
+  for (const h of headings) {
+    const node = { ...h, children: [] };
+    while (stack.length && stack[stack.length - 1].level >= h.level) {
+      stack.pop();
+    }
+    if (stack.length)
+      stack[stack.length - 1].children.push(node);
+    else
+      roots.push(node);
+    stack.push(node);
+  }
+  return roots;
+}
+function collectParentLines(nodes, out) {
+  for (const n of nodes) {
+    if (n.children.length) {
+      out.push(n.line);
+      collectParentLines(n.children, out);
+    }
+  }
+}
 var HeadingWordCountPlugin = class extends import_obsidian.Plugin {
   async onload() {
     await this.loadSettings();
     this.registerView(VIEW_TYPE, (leaf) => new HeadingWordCountView(leaf, this));
-    this.addRibbonIcon("list-ordered", "\u5B57\u6578\u5927\u7DB1", () => {
-      this.activateView();
+    this.addRibbonIcon("list-ordered", this.t.ribbonTooltip, () => {
+      void this.activateView();
     });
     this.addCommand({
-      id: "open-heading-word-count-outline",
-      name: "\u958B\u555F\u5B57\u6578\u5927\u7DB1\u9762\u677F",
-      callback: () => this.activateView()
+      id: "open-outline",
+      name: this.t.cmdOpen,
+      callback: () => {
+        void this.activateView();
+      }
     });
     this.addSettingTab(new HeadingWordCountSettingTab(this.app, this));
     this.registerEvent(
       this.app.workspace.on("active-leaf-change", () => this.refreshViews())
     );
     this.registerEvent(
-      this.app.workspace.on("file-open", () => this.refreshViews())
+      this.app.workspace.on("file-open", (file) => {
+        this.refreshViews();
+        if (file && this.settings.autoScrollFiles.includes(file.path)) {
+          window.setTimeout(() => {
+            const view = this.app.workspace.getActiveViewOfType(import_obsidian.MarkdownView);
+            if (view && view.file && view.file.path === file.path) {
+              this.scrollEditorToBottom(view);
+            }
+          }, 80);
+        }
+      })
     );
     const debouncedRefresh = (0, import_obsidian.debounce)(() => this.refreshViews(), 400, false);
     this.registerEvent(
@@ -184,12 +304,30 @@ var HeadingWordCountPlugin = class extends import_obsidian.Plugin {
   }
   onunload() {
   }
+  applyLang() {
+    this.t = getStrings(this.settings.uiLanguage);
+  }
   async loadSettings() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    const data = await this.loadData();
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, data != null ? data : {});
+    if (!Array.isArray(this.settings.autoScrollFiles)) {
+      this.settings.autoScrollFiles = [];
+    }
+    this.applyLang();
   }
   async saveSettings() {
+    this.applyLang();
     await this.saveData(this.settings);
     this.refreshViews();
+  }
+  scrollEditorToBottom(view) {
+    const editor = view.editor;
+    const last = editor.lastLine();
+    editor.setCursor({ line: last, ch: editor.getLine(last).length });
+    editor.scrollIntoView(
+      { from: { line: last, ch: 0 }, to: { line: last, ch: 0 } },
+      true
+    );
   }
   refreshViews() {
     this.app.workspace.getLeavesOfType(VIEW_TYPE).forEach((leaf) => {
@@ -214,13 +352,17 @@ var HeadingWordCountPlugin = class extends import_obsidian.Plugin {
 var HeadingWordCountView = class extends import_obsidian.ItemView {
   constructor(leaf, plugin) {
     super(leaf);
+    /** Collapsed heading lines, keyed by file path. */
+    this.collapsed = /* @__PURE__ */ new Map();
+    this.currentFile = null;
+    this.currentRoots = [];
     this.plugin = plugin;
   }
   getViewType() {
     return VIEW_TYPE;
   }
   getDisplayText() {
-    return "\u5B57\u6578\u5927\u7DB1";
+    return this.plugin.t.panelTitle;
   }
   getIcon() {
     return "list-ordered";
@@ -230,6 +372,14 @@ var HeadingWordCountView = class extends import_obsidian.ItemView {
   }
   async onClose() {
     this.contentEl.empty();
+  }
+  getCollapsedSet(path) {
+    let s = this.collapsed.get(path);
+    if (!s) {
+      s = /* @__PURE__ */ new Set();
+      this.collapsed.set(path, s);
+    }
+    return s;
   }
   getActiveMarkdownFile() {
     const active = this.app.workspace.getActiveViewOfType(import_obsidian.MarkdownView);
@@ -245,13 +395,13 @@ var HeadingWordCountView = class extends import_obsidian.ItemView {
   }
   render() {
     const container = this.contentEl;
-    container.empty();
     container.addClass("hwc-view");
     const file = this.getActiveMarkdownFile();
     if (!file) {
+      container.empty();
       container.createDiv({
         cls: "hwc-empty",
-        text: "\u958B\u555F\u4E00\u4EFD Markdown \u7B46\u8A18\u4EE5\u986F\u793A\u5B57\u6578\u5927\u7DB1\u3002"
+        text: this.plugin.t.emptyNoFile
       });
       return;
     }
@@ -267,38 +417,119 @@ var HeadingWordCountView = class extends import_obsidian.ItemView {
   renderContent(file, content) {
     const container = this.contentEl;
     container.empty();
+    this.currentFile = file;
+    const t = this.plugin.t;
     const data = analyzeDocument(content, this.plugin.settings);
     const s = this.plugin.settings;
+    const visible = data.headings.filter((h) => h.level <= s.maxDepth);
+    this.currentRoots = buildTree(visible);
+    const collapsedSet = this.getCollapsedSet(file.path);
+    const parentLines = [];
+    collectParentLines(this.currentRoots, parentLines);
+    const allCollapsed = parentLines.length > 0 && parentLines.every((l) => collapsedSet.has(l));
     const header = container.createDiv({ cls: "hwc-header" });
-    header.createDiv({ cls: "hwc-filename", text: file.basename });
+    const titleRow = header.createDiv({ cls: "hwc-titlerow" });
+    titleRow.createDiv({ cls: "hwc-filename", text: file.basename });
+    const toolbar = titleRow.createDiv({ cls: "hwc-toolbar" });
+    if (parentLines.length > 0) {
+      const foldBtn = toolbar.createDiv({ cls: "hwc-btn" });
+      (0, import_obsidian.setIcon)(foldBtn, allCollapsed ? "chevrons-up-down" : "chevrons-down-up");
+      foldBtn.setAttribute(
+        "aria-label",
+        allCollapsed ? t.tipExpandAll : t.tipCollapseAll
+      );
+      foldBtn.addEventListener("click", () => {
+        if (allCollapsed)
+          this.expandAll();
+        else
+          this.collapseAll();
+      });
+    }
+    const autoOn = s.autoScrollFiles.includes(file.path);
+    const scrollBtn = toolbar.createDiv({
+      cls: "hwc-btn" + (autoOn ? " is-active" : "")
+    });
+    (0, import_obsidian.setIcon)(scrollBtn, "chevrons-down");
+    scrollBtn.setAttribute("aria-label", autoOn ? t.tipAutoOn : t.tipAutoOff);
+    scrollBtn.addEventListener("click", () => void this.toggleAutoScroll(file));
     if (s.showDocumentTotal) {
       header.createDiv({
         cls: "hwc-doctotal",
-        text: `\u5168\u6587 ${formatCount(data.documentTotal)} \u5B57`
+        text: t.docTotal(formatCount(data.documentTotal))
       });
     }
-    const visible = data.headings.filter((h) => h.level <= s.maxDepth);
     if (visible.length === 0) {
       container.createDiv({
         cls: "hwc-empty",
-        text: "\u9019\u4EFD\u7B46\u8A18\u6C92\u6709\u6A19\u984C (H1\u2013H6)\u3002"
+        text: t.emptyNoHeadings
       });
       return;
     }
     const list = container.createDiv({ cls: "hwc-list" });
-    for (const h of visible) {
-      const count = s.countMode === "total" ? h.totalCount : h.ownCount;
-      const row = list.createDiv({ cls: `hwc-row hwc-h${h.level}` });
-      row.style.paddingLeft = `${(h.level - 1) * 14 + 4}px`;
-      row.createSpan({
-        cls: "hwc-title",
-        text: h.title || "(\u7121\u6A19\u984C)"
-      });
-      row.createSpan({
-        cls: "hwc-badge",
-        text: formatCount(count)
-      });
-      row.addEventListener("click", () => this.revealHeading(file, h.line));
+    this.renderNodes(this.currentRoots, list, collapsedSet, file);
+  }
+  renderNodes(nodes, listEl, collapsedSet, file) {
+    const s = this.plugin.settings;
+    const t = this.plugin.t;
+    for (const node of nodes) {
+      const hasChildren = node.children.length > 0;
+      const isCollapsed = collapsedSet.has(node.line);
+      const row = listEl.createDiv({ cls: `hwc-row hwc-h${node.level}` });
+      row.style.paddingLeft = `${(node.level - 1) * 14 + 4}px`;
+      const fold = row.createSpan({ cls: "hwc-fold" });
+      if (hasChildren) {
+        (0, import_obsidian.setIcon)(fold, isCollapsed ? "chevron-right" : "chevron-down");
+        fold.addEventListener("click", (e) => {
+          e.stopPropagation();
+          if (collapsedSet.has(node.line))
+            collapsedSet.delete(node.line);
+          else
+            collapsedSet.add(node.line);
+          this.render();
+        });
+      } else {
+        fold.addClass("hwc-fold-empty");
+      }
+      const count = s.countMode === "total" ? node.totalCount : node.ownCount;
+      row.createSpan({ cls: "hwc-title", text: node.title || t.untitled });
+      row.createSpan({ cls: "hwc-badge", text: formatCount(count) });
+      row.addEventListener("click", () => this.revealHeading(file, node.line));
+      if (hasChildren && !isCollapsed) {
+        this.renderNodes(node.children, listEl, collapsedSet, file);
+      }
+    }
+  }
+  collapseAll() {
+    if (!this.currentFile)
+      return;
+    const set = this.getCollapsedSet(this.currentFile.path);
+    const lines = [];
+    collectParentLines(this.currentRoots, lines);
+    lines.forEach((l) => set.add(l));
+    this.render();
+  }
+  expandAll() {
+    if (!this.currentFile)
+      return;
+    this.getCollapsedSet(this.currentFile.path).clear();
+    this.render();
+  }
+  async toggleAutoScroll(file) {
+    const arr = this.plugin.settings.autoScrollFiles;
+    const idx = arr.indexOf(file.path);
+    let turnedOn = false;
+    if (idx >= 0)
+      arr.splice(idx, 1);
+    else {
+      arr.push(file.path);
+      turnedOn = true;
+    }
+    await this.plugin.saveSettings();
+    if (turnedOn) {
+      const view = this.app.workspace.getActiveViewOfType(import_obsidian.MarkdownView);
+      if (view && view.file && view.file.path === file.path) {
+        this.plugin.scrollEditorToBottom(view);
+      }
     }
   }
   revealHeading(file, line) {
@@ -312,8 +543,7 @@ var HeadingWordCountView = class extends import_obsidian.ItemView {
       }
     }
     const open = target ? Promise.resolve(target) : this.app.workspace.getLeaf(false).openFile(file).then(() => {
-      const l = this.app.workspace.getMostRecentLeaf();
-      return l;
+      return this.app.workspace.getMostRecentLeaf();
     });
     void Promise.resolve(open).then((leaf) => {
       if (!leaf)
@@ -343,45 +573,70 @@ var HeadingWordCountSettingTab = class extends import_obsidian.PluginSettingTab 
   display() {
     const { containerEl } = this;
     containerEl.empty();
-    new import_obsidian.Setting(containerEl).setName("\u8A08\u7B97\u7BC4\u570D").setDesc(
-      "\u6BCF\u500B\u6A19\u984C\u7684\u5B57\u6578\u8981\u300C\u5305\u542B\u5E95\u4E0B\u6240\u6709\u5B50\u7AE0\u7BC0\u300D\uFF0C\u9084\u662F\u300C\u53EA\u7B97\u5230\u4E0B\u4E00\u500B\u6A19\u984C\u4E4B\u524D\u300D\u3002"
-    ).addDropdown(
-      (d) => d.addOption("total", "\u542B\u5B50\u7AE0\u7BC0\uFF08H1 \u5305\u542B\u5176\u4E0B\u6240\u6709\u5167\u5BB9\uFF09").addOption("own", "\u53EA\u7B97\u672C\u7BC0\uFF08\u4E0D\u542B\u5B50\u7AE0\u7BC0\uFF09").setValue(this.plugin.settings.countMode).onChange(async (v) => {
+    const t = this.plugin.t;
+    new import_obsidian.Setting(containerEl).setName(t.setLangName).setDesc(t.setLangDesc).addDropdown(
+      (d) => d.addOption("auto", t.optAuto).addOption("zh", "\u4E2D\u6587").addOption("en", "English").setValue(this.plugin.settings.uiLanguage).onChange(async (v) => {
+        this.plugin.settings.uiLanguage = v;
+        await this.plugin.saveSettings();
+        this.display();
+      })
+    );
+    new import_obsidian.Setting(containerEl).setName(t.setScopeName).setDesc(t.setScopeDesc).addDropdown(
+      (d) => d.addOption("total", t.optTotal).addOption("own", t.optOwn).setValue(this.plugin.settings.countMode).onChange(async (v) => {
         this.plugin.settings.countMode = v;
         await this.plugin.saveSettings();
       })
     );
-    new import_obsidian.Setting(containerEl).setName("\u8A08\u5165\u4E2D\u6587\u6A19\u9EDE\u7B26\u865F").setDesc(
-      "\u958B\u555F\u5F8C\uFF0C\u4E2D\u6587\u6A19\u9EDE\uFF08\uFF0C\u3002\u3001\uFF01\uFF1F\u300C\u300D\u7B49\uFF09\u4E5F\u6703\u8A08\u70BA 1 \u500B\u5B57\u3002\u4E2D\u6587\u65B9\u584A\u5B57\u4E00\u5F8B\u9010\u5B57\u8A08\u7B97\uFF0C\u4E0D\u53D7\u6B64\u9805\u5F71\u97FF\u3002"
-    ).addToggle(
-      (t) => t.setValue(this.plugin.settings.countChinesePunctuation).onChange(async (v) => {
+    new import_obsidian.Setting(containerEl).setName(t.setPunctName).setDesc(t.setPunctDesc).addToggle(
+      (tg) => tg.setValue(this.plugin.settings.countChinesePunctuation).onChange(async (v) => {
         this.plugin.settings.countChinesePunctuation = v;
         await this.plugin.saveSettings();
       })
     );
-    new import_obsidian.Setting(containerEl).setName("\u6392\u9664\u7A0B\u5F0F\u78BC\u5340\u584A").setDesc("\u4E0D\u8A08\u7B97 ``` \u570D\u6B04\u7A0B\u5F0F\u78BC\u5340\u584A\u5167\u7684\u6587\u5B57\u3002").addToggle(
-      (t) => t.setValue(this.plugin.settings.excludeCodeBlocks).onChange(async (v) => {
+    new import_obsidian.Setting(containerEl).setName(t.setExCodeName).setDesc(t.setExCodeDesc).addToggle(
+      (tg) => tg.setValue(this.plugin.settings.excludeCodeBlocks).onChange(async (v) => {
         this.plugin.settings.excludeCodeBlocks = v;
         await this.plugin.saveSettings();
       })
     );
-    new import_obsidian.Setting(containerEl).setName("\u6392\u9664\u884C\u5167\u7A0B\u5F0F\u78BC").setDesc("\u4E0D\u8A08\u7B97 `\u884C\u5167\u7A0B\u5F0F\u78BC` \u5167\u7684\u6587\u5B57\u3002").addToggle(
-      (t) => t.setValue(this.plugin.settings.excludeInlineCode).onChange(async (v) => {
+    new import_obsidian.Setting(containerEl).setName(t.setExInlineName).setDesc(t.setExInlineDesc).addToggle(
+      (tg) => tg.setValue(this.plugin.settings.excludeInlineCode).onChange(async (v) => {
         this.plugin.settings.excludeInlineCode = v;
         await this.plugin.saveSettings();
       })
     );
-    new import_obsidian.Setting(containerEl).setName("\u986F\u793A\u5230\u7B2C\u5E7E\u5C64\u6A19\u984C").setDesc("\u53EA\u5728\u9762\u677F\u4E2D\u986F\u793A\u5230\u6307\u5B9A\u5C64\u7D1A\u7684\u6A19\u984C\uFF081 = \u53EA\u986F\u793A H1\uFF0C6 = \u5168\u90E8\u986F\u793A\uFF09\u3002").addSlider(
-      (sl) => sl.setLimits(1, 6, 1).setValue(this.plugin.settings.maxDepth).setDynamicTooltip().onChange(async (v) => {
+    new import_obsidian.Setting(containerEl).setName(t.setDepthName).setDesc(t.setDepthDesc).addSlider(
+      (sl) => sl.setLimits(1, 6, 1).setValue(this.plugin.settings.maxDepth).onChange(async (v) => {
         this.plugin.settings.maxDepth = v;
         await this.plugin.saveSettings();
       })
     );
-    new import_obsidian.Setting(containerEl).setName("\u986F\u793A\u5168\u6587\u7E3D\u5B57\u6578").setDesc("\u5728\u9762\u677F\u9802\u7AEF\u986F\u793A\u6574\u4EFD\u7B46\u8A18\u7684\u7E3D\u5B57\u6578\u3002").addToggle(
-      (t) => t.setValue(this.plugin.settings.showDocumentTotal).onChange(async (v) => {
+    new import_obsidian.Setting(containerEl).setName(t.setShowTotalName).setDesc(t.setShowTotalDesc).addToggle(
+      (tg) => tg.setValue(this.plugin.settings.showDocumentTotal).onChange(async (v) => {
         this.plugin.settings.showDocumentTotal = v;
         await this.plugin.saveSettings();
       })
     );
+    new import_obsidian.Setting(containerEl).setName(t.setAutoScrollName).setDesc(t.setAutoScrollDesc);
+    if (this.plugin.settings.autoScrollFiles.length > 0) {
+      const list = containerEl.createDiv({ cls: "hwc-settings-filelist" });
+      list.createEl("div", {
+        text: t.autoListLabel,
+        cls: "setting-item-description"
+      });
+      for (const p of [...this.plugin.settings.autoScrollFiles]) {
+        const row = new import_obsidian.Setting(list).setName(p);
+        row.addButton(
+          (b) => b.setButtonText(t.removeBtn).onClick(async () => {
+            const arr = this.plugin.settings.autoScrollFiles;
+            const i = arr.indexOf(p);
+            if (i >= 0)
+              arr.splice(i, 1);
+            await this.plugin.saveSettings();
+            this.display();
+          })
+        );
+      }
+    }
   }
 };
