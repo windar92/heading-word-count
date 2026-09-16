@@ -48,6 +48,16 @@
 	color: var(--text-normal);
 }
 
+.hwc-btn-disabled {
+	opacity: 0.35;
+	cursor: default;
+}
+
+.hwc-btn-disabled:hover {
+	background-color: transparent;
+	color: var(--text-muted);
+}
+
 .hwc-btn.is-active {
 	color: var(--text-on-accent);
 	background-color: var(--interactive-accent);

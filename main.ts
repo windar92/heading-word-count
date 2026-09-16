@@ -290,18 +290,23 @@ class HeadingWordCountView extends ItemView {
 		const toolbar = titleRow.createDiv({ cls: "hwc-toolbar" });
 
 		// Single button that cycles: collapse all <-> expand all.
-		if (parentLines.length > 0) {
-			const foldBtn = toolbar.createDiv({ cls: "hwc-btn" });
-			setIcon(foldBtn, allCollapsed ? "chevrons-up-down" : "chevrons-down-up");
-			foldBtn.setAttribute(
-				"aria-label",
-				allCollapsed ? t.tipExpandAll : t.tipCollapseAll
-			);
-			foldBtn.addEventListener("click", () => {
-				if (allCollapsed) this.expandAll();
-				else this.collapseAll();
-			});
-		}
+		// Always shown (even when the note has no nested headings, so it never
+		// mysteriously disappears); it is simply a no-op when there is nothing
+		// to fold. Dimmed when there are no collapsible sections.
+		const hasFoldable = parentLines.length > 0;
+		const foldBtn = toolbar.createDiv({
+			cls: "hwc-btn" + (hasFoldable ? "" : " hwc-btn-disabled"),
+		});
+		setIcon(foldBtn, allCollapsed ? "chevrons-up-down" : "chevrons-down-up");
+		foldBtn.setAttribute(
+			"aria-label",
+			allCollapsed ? t.tipExpandAll : t.tipCollapseAll
+		);
+		foldBtn.addEventListener("click", () => {
+			if (!hasFoldable) return;
+			if (allCollapsed) this.expandAll();
+			else this.collapseAll();
+		});
 
 		const autoOn = s.autoScrollFiles.includes(file.path);
 		const scrollBtn = toolbar.createDiv({

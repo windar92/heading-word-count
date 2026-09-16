@@ -431,20 +431,23 @@ var HeadingWordCountView = class extends import_obsidian.ItemView {
     const titleRow = header.createDiv({ cls: "hwc-titlerow" });
     titleRow.createDiv({ cls: "hwc-filename", text: file.basename });
     const toolbar = titleRow.createDiv({ cls: "hwc-toolbar" });
-    if (parentLines.length > 0) {
-      const foldBtn = toolbar.createDiv({ cls: "hwc-btn" });
-      (0, import_obsidian.setIcon)(foldBtn, allCollapsed ? "chevrons-up-down" : "chevrons-down-up");
-      foldBtn.setAttribute(
-        "aria-label",
-        allCollapsed ? t.tipExpandAll : t.tipCollapseAll
-      );
-      foldBtn.addEventListener("click", () => {
-        if (allCollapsed)
-          this.expandAll();
-        else
-          this.collapseAll();
-      });
-    }
+    const hasFoldable = parentLines.length > 0;
+    const foldBtn = toolbar.createDiv({
+      cls: "hwc-btn" + (hasFoldable ? "" : " hwc-btn-disabled")
+    });
+    (0, import_obsidian.setIcon)(foldBtn, allCollapsed ? "chevrons-up-down" : "chevrons-down-up");
+    foldBtn.setAttribute(
+      "aria-label",
+      allCollapsed ? t.tipExpandAll : t.tipCollapseAll
+    );
+    foldBtn.addEventListener("click", () => {
+      if (!hasFoldable)
+        return;
+      if (allCollapsed)
+        this.expandAll();
+      else
+        this.collapseAll();
+    });
     const autoOn = s.autoScrollFiles.includes(file.path);
     const scrollBtn = toolbar.createDiv({
       cls: "hwc-btn" + (autoOn ? " is-active" : "")
