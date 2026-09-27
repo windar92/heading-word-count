@@ -47,6 +47,15 @@ export interface Strings {
 	setAutoScrollDesc: string;
 	autoListLabel: string;
 	removeBtn: string;
+
+	setHelpName: string;
+	setHelpDesc: string;
+	setHelpBtn: string;
+
+	cmdShowHelp: string;
+	helpTitle: string;
+	helpIntro: string;
+	helpSections: { heading: string; lines: string[] }[];
 }
 
 const EN: Strings = {
@@ -95,6 +104,51 @@ const EN: Strings = {
 		"This is a per-file setting: in the outline panel, click the down button (⌄⌄) to mark the current note as auto-scroll-to-bottom. Only marked notes do this; others behave normally.",
 	autoListLabel: "Files currently set to auto-scroll to bottom:",
 	removeBtn: "Remove",
+
+	setHelpName: "Help",
+	setHelpDesc: "Show the usage guide again.",
+	setHelpBtn: "Open guide",
+
+	cmdShowHelp: "Show Heading Word Count help",
+	helpTitle: "Welcome to Heading Word Count",
+	helpIntro:
+		"This plugin shows a live word count next to every heading (H1–H6) in your notes. Here's how to use it.",
+	helpSections: [
+		{
+			heading: "Open the outline panel",
+			lines: [
+				"Click the list icon in the left ribbon, or run \"Open the word-count outline panel\" from the command palette (Ctrl/Cmd+P).",
+			],
+		},
+		{
+			heading: "How counting works",
+			lines: [
+				"Chinese characters are always counted one by one.",
+				"Chinese punctuation (，。、！？「」etc.) is NOT counted by default — turn it on in Settings if you want it.",
+				"English text is counted by word, the normal way.",
+				"Each heading's badge can show its own count, or the total including everything beneath it — switch this in Settings under \"Counting scope\".",
+			],
+		},
+		{
+			heading: "Toolbar buttons",
+			lines: [
+				"The first button collapses or expands the whole outline (one button, click again to reverse). It's dimmed when the note has no nested headings to fold.",
+				"The second button (⌄⌄) turns on \"auto-scroll to bottom on open\" for the current file only — handy for a daily log or journal you always want to jump straight to the bottom of.",
+			],
+		},
+		{
+			heading: "Settings",
+			lines: [
+				"Open Settings → Community plugins → Heading Word Count to change the interface language, counting rules, how many heading levels to show, and to review or remove the list of auto-scroll files.",
+			],
+		},
+		{
+			heading: "Need this again later?",
+			lines: [
+				"Run the command \"Show Heading Word Count help\", or click the button in this plugin's settings tab.",
+			],
+		},
+	],
 };
 
 const ZH: Strings = {
@@ -142,6 +196,51 @@ const ZH: Strings = {
 		"此功能是「逐檔案」設定：在字數大綱面板頂端點「⌄⌄」按鈕，把目前這份筆記標記為「開啟時自動捲到底」。只有被標記的檔案會這樣，其它檔案照常。",
 	autoListLabel: "目前已標記自動捲到底的檔案：",
 	removeBtn: "移除",
+
+	setHelpName: "使用說明",
+	setHelpDesc: "重新看一次外掛的使用說明。",
+	setHelpBtn: "開啟說明",
+
+	cmdShowHelp: "顯示 Heading Word Count 使用說明",
+	helpTitle: "歡迎使用 Heading Word Count",
+	helpIntro:
+		"這個外掛會在你筆記裡每個標題（H1–H6）旁邊即時顯示字數。以下是使用方式。",
+	helpSections: [
+		{
+			heading: "開啟大綱面板",
+			lines: [
+				"點左側功能區的清單圖示，或用指令面板（Ctrl/Cmd+P）執行「開啟字數大綱面板」。",
+			],
+		},
+		{
+			heading: "計算規則",
+			lines: [
+				"中文字一律逐字計算。",
+				"中文標點（，。、！？「」等）預設不計入，可以到設定裡打開。",
+				"英文照一般方式逐字（word）計算。",
+				"每個標題旁的數字，可以顯示「只算本節」或「含所有子章節」——在設定的「計算範圍」裡切換。",
+			],
+		},
+		{
+			heading: "工具列按鈕",
+			lines: [
+				"第一顆按鈕是「全部收合／全部展開」，同一顆循環切換即可。如果這篇筆記沒有巢狀標題可收合，按鈕會變暗。",
+				"第二顆按鈕（⌄⌄）是「開啟時自動捲到底」，只針對目前這個檔案——很適合像日記、流水帳這種你總是想直接跳到最後面的筆記。",
+			],
+		},
+		{
+			heading: "設定",
+			lines: [
+				"到「設定 → 社群外掛 → Heading Word Count」可以調整介面語言、計算規則、要顯示到第幾層標題，也能查看或移除目前設定自動捲到底的檔案清單。",
+			],
+		},
+		{
+			heading: "之後想再看一次？",
+			lines: [
+				"隨時執行指令「顯示 Heading Word Count 使用說明」，或到外掛設定頁按下說明按鈕即可。",
+			],
+		},
+	],
 };
 
 /** Detect Obsidian's UI language from its stored setting. */

@@ -2,6 +2,7 @@ import {
 	App,
 	ItemView,
 	MarkdownView,
+	Modal,
 	Plugin,
 	PluginSettingTab,
 	Setting,
@@ -34,6 +35,8 @@ interface PluginSettings extends CountOptions {
 	autoScrollFiles: string[];
 	/** 介面語言：auto / zh / en */
 	uiLanguage: LangPref;
+	/** 上次啟動時的外掛版本；空字串代表這是第一次安裝，用來決定要不要彈出說明視窗 */
+	lastSeenVersion: string;
 }
 
 const DEFAULT_SETTINGS: PluginSettings = {
@@ -43,6 +46,7 @@ const DEFAULT_SETTINGS: PluginSettings = {
 	maxDepth: 6,
 	autoScrollFiles: [],
 	uiLanguage: "auto",
+	lastSeenVersion: "",
 };
 
 interface TreeNode extends HeadingNode {
@@ -76,6 +80,44 @@ function collectParentLines(nodes: TreeNode[], out: number[]): void {
 }
 
 // ===========================================================================
+// Help modal
+// ===========================================================================
+
+/**
+ * An in-app "how to use this" guide, shown once on first install and
+ * reachable afterwards from the command palette or the settings tab. This is
+ * deliberately a Modal rather than a note written into the vault: it needs no
+ * cleanup, can't conflict with sync, and can't be mistaken for the user's own
+ * content.
+ */
+class HelpModal extends Modal {
+	private t: Strings;
+
+	constructor(app: App, t: Strings) {
+		super(app);
+		this.t = t;
+	}
+
+	onOpen() {
+		const { contentEl } = this;
+		contentEl.empty();
+		contentEl.addClass("hwc-help-modal");
+		contentEl.createEl("h2", { text: this.t.helpTitle });
+		contentEl.createEl("p", { text: this.t.helpIntro });
+		for (const section of this.t.helpSections) {
+			contentEl.createEl("h3", { text: section.heading });
+			for (const line of section.lines) {
+				contentEl.createEl("p", { text: line });
+			}
+		}
+	}
+
+	onClose() {
+		this.contentEl.empty();
+	}
+}
+
+// ===========================================================================
 // Plugin
 // ===========================================================================
 
@@ -85,6 +127,16 @@ export default class HeadingWordCountPlugin extends Plugin {
 
 	async onload() {
 		await this.loadSettings();
+
+		// A blank lastSeenVersion means this is the very first activation.
+		// We show the help modal once for that case only (never again on
+		// later version bumps, so updates don't nag); it stays reachable at
+		// any time via the command below or the settings tab button.
+		const isFirstRun = !this.settings.lastSeenVersion;
+		if (this.settings.lastSeenVersion !== this.manifest.version) {
+			this.settings.lastSeenVersion = this.manifest.version;
+			await this.saveData(this.settings);
+		}
 
 		this.registerView(VIEW_TYPE, (leaf) => new HeadingWordCountView(leaf, this));
 
@@ -100,6 +152,14 @@ export default class HeadingWordCountPlugin extends Plugin {
 			},
 		});
 
+		this.addCommand({
+			id: "show-help",
+			name: this.t.cmdShowHelp,
+			callback: () => {
+				new HelpModal(this.app, this.t).open();
+			},
+		});
+
 		this.addSettingTab(new HeadingWordCountSettingTab(this.app, this));
 
 		// Refresh triggers
@@ -110,14 +170,7 @@ export default class HeadingWordCountPlugin extends Plugin {
 			this.app.workspace.on("file-open", (file) => {
 				this.refreshViews();
 				if (file && this.settings.autoScrollFiles.includes(file.path)) {
-					// Editor needs a tick to be ready after opening.
-					window.setTimeout(() => {
-						const view =
-							this.app.workspace.getActiveViewOfType(MarkdownView);
-						if (view && view.file && view.file.path === file.path) {
-							this.scrollEditorToBottom(view);
-						}
-					}, 80);
+					void this.autoScrollOnOpen(file);
 				}
 			})
 		);
@@ -127,7 +180,12 @@ export default class HeadingWordCountPlugin extends Plugin {
 			this.app.workspace.on("editor-change", () => debouncedRefresh())
 		);
 
-		this.app.workspace.onLayoutReady(() => this.refreshViews());
+		this.app.workspace.onLayoutReady(() => {
+			this.refreshViews();
+			if (isFirstRun) {
+				new HelpModal(this.app, this.t).open();
+			}
+		});
 	}
 
 	onunload() {
@@ -151,6 +209,46 @@ export default class HeadingWordCountPlugin extends Plugin {
 		this.applyLang();
 		await this.saveData(this.settings);
 		this.refreshViews();
+	}
+
+	/**
+	 * Scrolls the editor for `file` to the bottom right after it was opened.
+	 *
+	 * On mobile especially, Obsidian frequently hands the newly-opened file a
+	 * "deferred" leaf: `leaf.view` is a placeholder, not the real
+	 * MarkdownView, until it is explicitly loaded. Scrolling (or even reading
+	 * `.editor`) on a leaf in that state silently does nothing, which is why
+	 * this feature would work on desktop but not on phones. We locate the
+	 * leaf that now holds this file, force it to finish loading if it is
+	 * deferred, and only then touch the editor.
+	 */
+	async autoScrollOnOpen(file: TFile) {
+		let leaf: WorkspaceLeaf | undefined = this.app.workspace
+			.getLeavesOfType("markdown")
+			.find(
+				(l) => (l.getViewState().state as { file?: string })?.file === file.path
+			);
+		if (!leaf) leaf = this.app.workspace.getMostRecentLeaf() ?? undefined;
+		if (!leaf) return;
+
+		if (leaf.isDeferred) {
+			await leaf.loadIfDeferred();
+		}
+
+		// Even once loaded, mobile can still need an extra tick to finish
+		// laying out the editor before scrollIntoView has anything to
+		// measure against.
+		window.setTimeout(() => {
+			const active = this.app.workspace.getActiveViewOfType(MarkdownView);
+			if (active && active.file && active.file.path === file.path) {
+				this.scrollEditorToBottom(active);
+				return;
+			}
+			const view = leaf!.view;
+			if (view instanceof MarkdownView && view.file && view.file.path === file.path) {
+				this.scrollEditorToBottom(view);
+			}
+		}, 80);
 	}
 
 	scrollEditorToBottom(view: MarkdownView) {
@@ -557,6 +655,15 @@ class HeadingWordCountSettingTab extends PluginSettingTab {
 						this.plugin.settings.showDocumentTotal = v;
 						await this.plugin.saveSettings();
 					})
+			);
+
+		new Setting(containerEl)
+			.setName(t.setHelpName)
+			.setDesc(t.setHelpDesc)
+			.addButton((b) =>
+				b.setButtonText(t.setHelpBtn).onClick(() => {
+					new HelpModal(this.app, t).open();
+				})
 			);
 
 		new Setting(containerEl)

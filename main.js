@@ -182,7 +182,49 @@ var EN = {
   setAutoScrollName: "Auto-scroll to bottom on open (per file)",
   setAutoScrollDesc: "This is a per-file setting: in the outline panel, click the down button (\u2304\u2304) to mark the current note as auto-scroll-to-bottom. Only marked notes do this; others behave normally.",
   autoListLabel: "Files currently set to auto-scroll to bottom:",
-  removeBtn: "Remove"
+  removeBtn: "Remove",
+  setHelpName: "Help",
+  setHelpDesc: "Show the usage guide again.",
+  setHelpBtn: "Open guide",
+  cmdShowHelp: "Show Heading Word Count help",
+  helpTitle: "Welcome to Heading Word Count",
+  helpIntro: "This plugin shows a live word count next to every heading (H1\u2013H6) in your notes. Here's how to use it.",
+  helpSections: [
+    {
+      heading: "Open the outline panel",
+      lines: [
+        'Click the list icon in the left ribbon, or run "Open the word-count outline panel" from the command palette (Ctrl/Cmd+P).'
+      ]
+    },
+    {
+      heading: "How counting works",
+      lines: [
+        "Chinese characters are always counted one by one.",
+        "Chinese punctuation (\uFF0C\u3002\u3001\uFF01\uFF1F\u300C\u300Detc.) is NOT counted by default \u2014 turn it on in Settings if you want it.",
+        "English text is counted by word, the normal way.",
+        `Each heading's badge can show its own count, or the total including everything beneath it \u2014 switch this in Settings under "Counting scope".`
+      ]
+    },
+    {
+      heading: "Toolbar buttons",
+      lines: [
+        "The first button collapses or expands the whole outline (one button, click again to reverse). It's dimmed when the note has no nested headings to fold.",
+        'The second button (\u2304\u2304) turns on "auto-scroll to bottom on open" for the current file only \u2014 handy for a daily log or journal you always want to jump straight to the bottom of.'
+      ]
+    },
+    {
+      heading: "Settings",
+      lines: [
+        "Open Settings \u2192 Community plugins \u2192 Heading Word Count to change the interface language, counting rules, how many heading levels to show, and to review or remove the list of auto-scroll files."
+      ]
+    },
+    {
+      heading: "Need this again later?",
+      lines: [
+        `Run the command "Show Heading Word Count help", or click the button in this plugin's settings tab.`
+      ]
+    }
+  ]
 };
 var ZH = {
   panelTitle: "\u5B57\u6578\u5927\u7DB1",
@@ -216,7 +258,49 @@ var ZH = {
   setAutoScrollName: "\u958B\u555F\u6642\u81EA\u52D5\u6372\u5230\u5E95\uFF08\u4F9D\u6A94\u6848\uFF09",
   setAutoScrollDesc: "\u6B64\u529F\u80FD\u662F\u300C\u9010\u6A94\u6848\u300D\u8A2D\u5B9A\uFF1A\u5728\u5B57\u6578\u5927\u7DB1\u9762\u677F\u9802\u7AEF\u9EDE\u300C\u2304\u2304\u300D\u6309\u9215\uFF0C\u628A\u76EE\u524D\u9019\u4EFD\u7B46\u8A18\u6A19\u8A18\u70BA\u300C\u958B\u555F\u6642\u81EA\u52D5\u6372\u5230\u5E95\u300D\u3002\u53EA\u6709\u88AB\u6A19\u8A18\u7684\u6A94\u6848\u6703\u9019\u6A23\uFF0C\u5176\u5B83\u6A94\u6848\u7167\u5E38\u3002",
   autoListLabel: "\u76EE\u524D\u5DF2\u6A19\u8A18\u81EA\u52D5\u6372\u5230\u5E95\u7684\u6A94\u6848\uFF1A",
-  removeBtn: "\u79FB\u9664"
+  removeBtn: "\u79FB\u9664",
+  setHelpName: "\u4F7F\u7528\u8AAA\u660E",
+  setHelpDesc: "\u91CD\u65B0\u770B\u4E00\u6B21\u5916\u639B\u7684\u4F7F\u7528\u8AAA\u660E\u3002",
+  setHelpBtn: "\u958B\u555F\u8AAA\u660E",
+  cmdShowHelp: "\u986F\u793A Heading Word Count \u4F7F\u7528\u8AAA\u660E",
+  helpTitle: "\u6B61\u8FCE\u4F7F\u7528 Heading Word Count",
+  helpIntro: "\u9019\u500B\u5916\u639B\u6703\u5728\u4F60\u7B46\u8A18\u88E1\u6BCF\u500B\u6A19\u984C\uFF08H1\u2013H6\uFF09\u65C1\u908A\u5373\u6642\u986F\u793A\u5B57\u6578\u3002\u4EE5\u4E0B\u662F\u4F7F\u7528\u65B9\u5F0F\u3002",
+  helpSections: [
+    {
+      heading: "\u958B\u555F\u5927\u7DB1\u9762\u677F",
+      lines: [
+        "\u9EDE\u5DE6\u5074\u529F\u80FD\u5340\u7684\u6E05\u55AE\u5716\u793A\uFF0C\u6216\u7528\u6307\u4EE4\u9762\u677F\uFF08Ctrl/Cmd+P\uFF09\u57F7\u884C\u300C\u958B\u555F\u5B57\u6578\u5927\u7DB1\u9762\u677F\u300D\u3002"
+      ]
+    },
+    {
+      heading: "\u8A08\u7B97\u898F\u5247",
+      lines: [
+        "\u4E2D\u6587\u5B57\u4E00\u5F8B\u9010\u5B57\u8A08\u7B97\u3002",
+        "\u4E2D\u6587\u6A19\u9EDE\uFF08\uFF0C\u3002\u3001\uFF01\uFF1F\u300C\u300D\u7B49\uFF09\u9810\u8A2D\u4E0D\u8A08\u5165\uFF0C\u53EF\u4EE5\u5230\u8A2D\u5B9A\u88E1\u6253\u958B\u3002",
+        "\u82F1\u6587\u7167\u4E00\u822C\u65B9\u5F0F\u9010\u5B57\uFF08word\uFF09\u8A08\u7B97\u3002",
+        "\u6BCF\u500B\u6A19\u984C\u65C1\u7684\u6578\u5B57\uFF0C\u53EF\u4EE5\u986F\u793A\u300C\u53EA\u7B97\u672C\u7BC0\u300D\u6216\u300C\u542B\u6240\u6709\u5B50\u7AE0\u7BC0\u300D\u2014\u2014\u5728\u8A2D\u5B9A\u7684\u300C\u8A08\u7B97\u7BC4\u570D\u300D\u88E1\u5207\u63DB\u3002"
+      ]
+    },
+    {
+      heading: "\u5DE5\u5177\u5217\u6309\u9215",
+      lines: [
+        "\u7B2C\u4E00\u9846\u6309\u9215\u662F\u300C\u5168\u90E8\u6536\u5408\uFF0F\u5168\u90E8\u5C55\u958B\u300D\uFF0C\u540C\u4E00\u9846\u5FAA\u74B0\u5207\u63DB\u5373\u53EF\u3002\u5982\u679C\u9019\u7BC7\u7B46\u8A18\u6C92\u6709\u5DE2\u72C0\u6A19\u984C\u53EF\u6536\u5408\uFF0C\u6309\u9215\u6703\u8B8A\u6697\u3002",
+        "\u7B2C\u4E8C\u9846\u6309\u9215\uFF08\u2304\u2304\uFF09\u662F\u300C\u958B\u555F\u6642\u81EA\u52D5\u6372\u5230\u5E95\u300D\uFF0C\u53EA\u91DD\u5C0D\u76EE\u524D\u9019\u500B\u6A94\u6848\u2014\u2014\u5F88\u9069\u5408\u50CF\u65E5\u8A18\u3001\u6D41\u6C34\u5E33\u9019\u7A2E\u4F60\u7E3D\u662F\u60F3\u76F4\u63A5\u8DF3\u5230\u6700\u5F8C\u9762\u7684\u7B46\u8A18\u3002"
+      ]
+    },
+    {
+      heading: "\u8A2D\u5B9A",
+      lines: [
+        "\u5230\u300C\u8A2D\u5B9A \u2192 \u793E\u7FA4\u5916\u639B \u2192 Heading Word Count\u300D\u53EF\u4EE5\u8ABF\u6574\u4ECB\u9762\u8A9E\u8A00\u3001\u8A08\u7B97\u898F\u5247\u3001\u8981\u986F\u793A\u5230\u7B2C\u5E7E\u5C64\u6A19\u984C\uFF0C\u4E5F\u80FD\u67E5\u770B\u6216\u79FB\u9664\u76EE\u524D\u8A2D\u5B9A\u81EA\u52D5\u6372\u5230\u5E95\u7684\u6A94\u6848\u6E05\u55AE\u3002"
+      ]
+    },
+    {
+      heading: "\u4E4B\u5F8C\u60F3\u518D\u770B\u4E00\u6B21\uFF1F",
+      lines: [
+        "\u96A8\u6642\u57F7\u884C\u6307\u4EE4\u300C\u986F\u793A Heading Word Count \u4F7F\u7528\u8AAA\u660E\u300D\uFF0C\u6216\u5230\u5916\u639B\u8A2D\u5B9A\u9801\u6309\u4E0B\u8AAA\u660E\u6309\u9215\u5373\u53EF\u3002"
+      ]
+    }
+  ]
 };
 function detectObsidianLang() {
   try {
@@ -239,7 +323,8 @@ var DEFAULT_SETTINGS = {
   showDocumentTotal: true,
   maxDepth: 6,
   autoScrollFiles: [],
-  uiLanguage: "auto"
+  uiLanguage: "auto",
+  lastSeenVersion: ""
 };
 function buildTree(headings) {
   const roots = [];
@@ -265,9 +350,36 @@ function collectParentLines(nodes, out) {
     }
   }
 }
+var HelpModal = class extends import_obsidian.Modal {
+  constructor(app, t) {
+    super(app);
+    this.t = t;
+  }
+  onOpen() {
+    const { contentEl } = this;
+    contentEl.empty();
+    contentEl.addClass("hwc-help-modal");
+    contentEl.createEl("h2", { text: this.t.helpTitle });
+    contentEl.createEl("p", { text: this.t.helpIntro });
+    for (const section of this.t.helpSections) {
+      contentEl.createEl("h3", { text: section.heading });
+      for (const line of section.lines) {
+        contentEl.createEl("p", { text: line });
+      }
+    }
+  }
+  onClose() {
+    this.contentEl.empty();
+  }
+};
 var HeadingWordCountPlugin = class extends import_obsidian.Plugin {
   async onload() {
     await this.loadSettings();
+    const isFirstRun = !this.settings.lastSeenVersion;
+    if (this.settings.lastSeenVersion !== this.manifest.version) {
+      this.settings.lastSeenVersion = this.manifest.version;
+      await this.saveData(this.settings);
+    }
     this.registerView(VIEW_TYPE, (leaf) => new HeadingWordCountView(leaf, this));
     this.addRibbonIcon("list-ordered", this.t.ribbonTooltip, () => {
       void this.activateView();
@@ -279,6 +391,13 @@ var HeadingWordCountPlugin = class extends import_obsidian.Plugin {
         void this.activateView();
       }
     });
+    this.addCommand({
+      id: "show-help",
+      name: this.t.cmdShowHelp,
+      callback: () => {
+        new HelpModal(this.app, this.t).open();
+      }
+    });
     this.addSettingTab(new HeadingWordCountSettingTab(this.app, this));
     this.registerEvent(
       this.app.workspace.on("active-leaf-change", () => this.refreshViews())
@@ -287,12 +406,7 @@ var HeadingWordCountPlugin = class extends import_obsidian.Plugin {
       this.app.workspace.on("file-open", (file) => {
         this.refreshViews();
         if (file && this.settings.autoScrollFiles.includes(file.path)) {
-          window.setTimeout(() => {
-            const view = this.app.workspace.getActiveViewOfType(import_obsidian.MarkdownView);
-            if (view && view.file && view.file.path === file.path) {
-              this.scrollEditorToBottom(view);
-            }
-          }, 80);
+          void this.autoScrollOnOpen(file);
         }
       })
     );
@@ -300,7 +414,12 @@ var HeadingWordCountPlugin = class extends import_obsidian.Plugin {
     this.registerEvent(
       this.app.workspace.on("editor-change", () => debouncedRefresh())
     );
-    this.app.workspace.onLayoutReady(() => this.refreshViews());
+    this.app.workspace.onLayoutReady(() => {
+      this.refreshViews();
+      if (isFirstRun) {
+        new HelpModal(this.app, this.t).open();
+      }
+    });
   }
   onunload() {
   }
@@ -319,6 +438,44 @@ var HeadingWordCountPlugin = class extends import_obsidian.Plugin {
     this.applyLang();
     await this.saveData(this.settings);
     this.refreshViews();
+  }
+  /**
+   * Scrolls the editor for `file` to the bottom right after it was opened.
+   *
+   * On mobile especially, Obsidian frequently hands the newly-opened file a
+   * "deferred" leaf: `leaf.view` is a placeholder, not the real
+   * MarkdownView, until it is explicitly loaded. Scrolling (or even reading
+   * `.editor`) on a leaf in that state silently does nothing, which is why
+   * this feature would work on desktop but not on phones. We locate the
+   * leaf that now holds this file, force it to finish loading if it is
+   * deferred, and only then touch the editor.
+   */
+  async autoScrollOnOpen(file) {
+    var _a;
+    let leaf = this.app.workspace.getLeavesOfType("markdown").find(
+      (l) => {
+        var _a2;
+        return ((_a2 = l.getViewState().state) == null ? void 0 : _a2.file) === file.path;
+      }
+    );
+    if (!leaf)
+      leaf = (_a = this.app.workspace.getMostRecentLeaf()) != null ? _a : void 0;
+    if (!leaf)
+      return;
+    if (leaf.isDeferred) {
+      await leaf.loadIfDeferred();
+    }
+    window.setTimeout(() => {
+      const active = this.app.workspace.getActiveViewOfType(import_obsidian.MarkdownView);
+      if (active && active.file && active.file.path === file.path) {
+        this.scrollEditorToBottom(active);
+        return;
+      }
+      const view = leaf.view;
+      if (view instanceof import_obsidian.MarkdownView && view.file && view.file.path === file.path) {
+        this.scrollEditorToBottom(view);
+      }
+    }, 80);
   }
   scrollEditorToBottom(view) {
     const editor = view.editor;
@@ -618,6 +775,11 @@ var HeadingWordCountSettingTab = class extends import_obsidian.PluginSettingTab 
       (tg) => tg.setValue(this.plugin.settings.showDocumentTotal).onChange(async (v) => {
         this.plugin.settings.showDocumentTotal = v;
         await this.plugin.saveSettings();
+      })
+    );
+    new import_obsidian.Setting(containerEl).setName(t.setHelpName).setDesc(t.setHelpDesc).addButton(
+      (b) => b.setButtonText(t.setHelpBtn).onClick(() => {
+        new HelpModal(this.app, t).open();
       })
     );
     new import_obsidian.Setting(containerEl).setName(t.setAutoScrollName).setDesc(t.setAutoScrollDesc);
